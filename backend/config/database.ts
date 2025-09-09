@@ -8,7 +8,8 @@ const connection = mysql.createConnection({
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'db_bit'
+  // database: process.env.DB_NAME || 'db_bit'
+  database: process.env.DB_NAME || 'school_revitalization'
 });
 
 export default connection;

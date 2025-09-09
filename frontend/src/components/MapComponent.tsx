@@ -1,6 +1,7 @@
-// components/MapComponent.tsx
-import React from 'react';
+// frontend/src/components/MapComponent.tsx
+import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
+import { getProvinces, ProvinceData } from '../services/api';
 import 'leaflet/dist/leaflet.css';
 import './MapComponent.css';
 import indonesiaGeoJSON from '../data/indonesia-provinces.json';
@@ -11,26 +12,53 @@ interface MapComponentProps {
 }
 
 const MapComponent: React.FC<MapComponentProps> = ({ onProvinceSelect, selectedProvince }) => {
-  // This would normally come from API
-  const provinceData = {
-    "11": { name: "Aceh", revitalizations: { paud: 26, sd: 138, smp: 96, sma: 122 } },
-    "51": { name: "Bali", revitalizations: { paud: 10, sd: 53, smp: 22, sma: 20 } },
-    // More provinces would be added here
-  };
+  const [provincesData, setProvincesData] = useState<ProvinceData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await getProvinces();
+        
+        // Check if data has error property
+        if (data && 'error' in data) {
+          setError(data.error);
+          return;
+        }
+        
+        // Type guard to check if it's ProvinceData[]
+        if (Array.isArray(data)) {
+          setProvincesData(data);
+        } else {
+          setError('Unexpected data format from API');
+        }
+      } catch (error) {
+        console.error('Error fetching provinces data:', error);
+        setError('Failed to fetch data from server');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const onEachFeature = (feature: any, layer: any) => {
     const provinceCode = feature.properties.id;
     const provinceName = feature.properties.name;
-    const data = provinceData[provinceCode as keyof typeof provinceData];
+    const data = provincesData.find(p => p.code === provinceCode);
     
     if (data) {
       layer.bindTooltip(`
         <div class="map-tooltip">
           <strong>${provinceName}</strong><br>
-          PAUD: ${data.revitalizations.paud} sekolah<br>
-          SD: ${data.revitalizations.sd} sekolah<br>
-          SMP: ${data.revitalizations.smp} sekolah<br>
-          SMA: ${data.revitalizations.sma} sekolah
+          Total Sekolah: ${data.total_schools.toLocaleString('id-ID')}<br>
+          Total Anggaran: ${new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0
+          }).format(data.total_budget)}
         </div>
       `);
     } else {
@@ -43,6 +71,19 @@ const MapComponent: React.FC<MapComponentProps> = ({ onProvinceSelect, selectedP
       }
     });
   };
+
+  if (loading) {
+    return <div className="map-loading">Loading map data...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="map-container">
+        <h2>Peta Persebaran Revitalisasi Sekolah</h2>
+        <div className="error">Error: {error}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="map-container">
@@ -61,8 +102,11 @@ const MapComponent: React.FC<MapComponentProps> = ({ onProvinceSelect, selectedP
           onEachFeature={onEachFeature}
           style={(feature) => {
             const provinceCode = feature?.properties.id;
+            const hasData = provincesData.some(p => p.code === provinceCode);
+            
             return {
-              fillColor: selectedProvince === provinceCode ? '#e74c3c' : '#3498db',
+              fillColor: selectedProvince === provinceCode ? '#e74c3c' : 
+                         hasData ? '#3498db' : '#bdc3c7',
               weight: 2,
               opacity: 1,
               color: 'white',

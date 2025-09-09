@@ -7,10 +7,14 @@ const api = axios.create({
   baseURL: API_BASE_URL,
 });
 
+// Update these interfaces to match what your backend actually returns
 export interface RevitalizationData {
   education_level: string;
-  school_count: number;
-  budget: number;
+  total_schools?: number;
+  total_budget?: number;
+  school_count?: number;
+  budget?: number;
+  error?: string; // Add error property
 }
 
 export interface ProvinceData {
@@ -22,6 +26,7 @@ export interface ProvinceData {
 }
 
 export interface DistrictData {
+  district_id?: number;
   district_name: string;
   province_name: string;
   education_level: string;
@@ -30,27 +35,47 @@ export interface DistrictData {
 }
 
 // Fetch national data
-export const getNationalData = async (): Promise<RevitalizationData[]> => {
-  const response = await api.get('/national');
-  return response.data;
+export const getNationalData = async (): Promise<RevitalizationData[] | { error: string }> => {
+  try {
+    const response = await api.get('/national');
+    return response.data;
+  } catch (error) {
+    console.error('API Error:', error);
+    return { error: 'Failed to fetch national data' };
+  }
 };
 
 // Fetch all provinces data
-export const getProvinces = async (): Promise<ProvinceData[]> => {
-  const response = await api.get('/provinces');
-  return response.data;
+export const getProvinces = async (): Promise<ProvinceData[] | { error: string }> => {
+  try {
+    const response = await api.get('/provinces');
+    return response.data;
+  } catch (error) {
+    console.error('API Error:', error);
+    return { error: 'Failed to fetch provinces data' };
+  }
 };
 
 // Fetch province data by code
-export const getProvinceData = async (code: string): Promise<DistrictData[]> => {
-  const response = await api.get(`/province/${code}`);
-  return response.data;
+export const getProvinceData = async (code: string): Promise<DistrictData[] | { error: string }> => {
+  try {
+    const response = await api.get(`/province/${code}`);
+    return response.data;
+  } catch (error) {
+    console.error('API Error:', error);
+    return { error: 'Failed to fetch province data' };
+  }
 };
 
 // Fetch district data by ID
-export const getDistrictData = async (id: string): Promise<DistrictData[]> => {
-  const response = await api.get(`/district/${id}`);
-  return response.data;
+export const getDistrictData = async (id: string): Promise<DistrictData[] | { error: string }> => {
+  try {
+    const response = await api.get(`/district/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('API Error:', error);
+    return { error: 'Failed to fetch district data' };
+  }
 };
 
 export default api;

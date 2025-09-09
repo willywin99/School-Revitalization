@@ -6,20 +6,14 @@ import db from '../config/database';
 export const getNationalData = (req: Request, res: Response) => {
   const query = `
     SELECT 
-      SUM(school_count) as total_schools,
-      SUM(budget) as total_budget,
       education_level,
-      SUM(CASE WHEN education_level = 'paud' THEN school_count ELSE 0 END) as paud_count,
-      SUM(CASE WHEN education_level = 'paud' THEN budget ELSE 0 END) as paud_budget,
-      SUM(CASE WHEN education_level = 'sd' THEN school_count ELSE 0 END) as sd_count,
-      SUM(CASE WHEN education_level = 'sd' THEN budget ELSE 0 END) as sd_budget,
-      SUM(CASE WHEN education_level = 'smp' THEN school_count ELSE 0 END) as smp_count,
-      SUM(CASE WHEN education_level = 'smp' THEN budget ELSE 0 END) as smp_budget,
-      SUM(CASE WHEN education_level = 'sma' THEN school_count ELSE 0 END) as sma_count,
-      SUM(CASE WHEN education_level = 'sma' THEN budget ELSE 0 END) as sma_budget
+      SUM(school_count) as total_schools,
+      SUM(budget) as total_budget
     FROM revitalizations
     GROUP BY education_level
   `;
+
+  console.log('Executing query:', query); // Debug log
 
   db.query(query, (error, results) => {
     if (error) {
